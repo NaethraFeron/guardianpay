@@ -1,10 +1,12 @@
 package com.guardianpay.guardianpay.controller;
 
+import com.guardianpay.guardianpay.dto.LoginRequest;
 import com.guardianpay.guardianpay.dto.RegisterRequest;
 import com.guardianpay.guardianpay.model.Account;
 import com.guardianpay.guardianpay.model.User;
 import com.guardianpay.guardianpay.repository.AccountRepository;
 import com.guardianpay.guardianpay.repository.UserRepository;
+import com.guardianpay.guardianpay.security.JwtService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -24,6 +27,7 @@ public class AuthController {
     private final UserRepository userRepository;
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     @PostMapping("/register")
     @Transactional
@@ -45,5 +49,16 @@ public class AuthController {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(Map.of("id", user.getId(), "email", user.getEmail()));
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest req) {
+        Optional<User> found = userRepository.findByEmail(req.email());
+        if (found.isEmpty()
+                || !passwordEncoder.matches(req.password(), found.get().getPasswordHash())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Invalid email or password"));
+        }
+        return ResponseEntity.ok(Map.of("token", jwtService.generateToken(found.get())));
     }
 }
