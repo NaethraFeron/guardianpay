@@ -38,4 +38,7 @@ public class Transfer {
 
     @Column(nullable = false)
     private Instant createdAt = Instant.now();
+
+    private Instant releaseAt;
+    private Instant deadlineAt;
 }

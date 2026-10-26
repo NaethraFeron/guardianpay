@@ -34,6 +34,7 @@ public class SecurityConfig {
                     new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**", "/h2-console/**", "/error").permitAll()
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated())
             .addFilterBefore(new JwtAuthFilter(jwtService, userRepository),
                     UsernamePasswordAuthenticationFilter.class);
